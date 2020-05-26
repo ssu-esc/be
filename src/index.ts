@@ -3,6 +3,9 @@ import Multer from 'multer';
 import NodeID3 from 'node-id3';
 import fs from 'fs';
 
+import { ApolloServer } from 'apollo-server-express';
+import { typeDefs, resolvers } from './schema';
+
 const app = Express();
 const port = process.env.PORT || 3000;
 const upload = Multer({ dest: 'uploads/' });
@@ -26,6 +29,15 @@ app.post('/upload', upload.single('music'), (req, res) => {
   }
   return res.json({ status: 'ok', ...tags });
 });
+
+const apolloServer = new ApolloServer({
+  typeDefs,
+  resolvers,
+  introspection: true,
+  playground: true,
+});
+
+apolloServer.applyMiddleware({ app });
 
 app.listen(port, () =>
   console.log(`Express: Server listening at http://localhost:${port}/`),
