@@ -17,7 +17,7 @@ steps:
       - '--image'
       - 'asia.gcr.io/ssu-esc/music-player-backend:$COMMIT_SHA'
       - '--region'
-      - 'ap-northeast-1'
+      - 'asia-northeast1'
       - '--platform'
       - 'managed'
 images:
