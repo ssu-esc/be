@@ -1,5 +1,5 @@
 steps:
-  - name: 'asia.gcr.io/cloud-builders/docker'
+  - name: 'gcr.io/cloud-builders/docker'
     args:
       [
         'build',
@@ -7,9 +7,9 @@ steps:
         'asia.gcr.io/ssu-esc/music-player-backend:$COMMIT_SHA',
         '.',
       ]
-  - name: 'asia.gcr.io/cloud-builders/docker'
+  - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'asia.gcr.io/ssu-esc/music-player-backend:$COMMIT_SHA']
-  - name: 'asia.gcr.io/cloud-builders/gcloud'
+  - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'run'
       - 'deploy'
@@ -17,7 +17,7 @@ steps:
       - '--image'
       - 'asia.gcr.io/ssu-esc/music-player-backend:$COMMIT_SHA'
       - '--region'
-      - 'ap-northeast-1'
+      - 'asia-northeast1'
       - '--platform'
       - 'managed'
 images:
