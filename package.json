@@ -28,7 +28,7 @@
     "typescript": "^3.9.2"
   },
   "scripts": {
-    "start": "node lib/index.js",
+    "start": "nodemon lib/index.js",
     "build": "tsc -p .",
     "build:watch": "tsc -p . -w"
   },
