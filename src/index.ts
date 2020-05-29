@@ -20,6 +20,8 @@ DB.authenticate()
     console.error('Database: Authenticate error:', err);
   });
 
+DB.sync();
+
 app.get('/', (_, res) => {
   res.send('🤔');
 });
