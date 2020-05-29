@@ -1,4 +1,4 @@
-import { Sequelize } from 'sequelize';
+import { Sequelize, Model, DataTypes } from 'sequelize';
 import DotEnv from 'dotenv';
 
 DotEnv.config();
@@ -16,4 +16,22 @@ const DB = new Sequelize(
   },
 );
 
+class User extends Model {}
+
+User.init(
+  {
+    uid: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    email: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+  },
+  { sequelize: DB },
+);
+
+export { User };
 export default DB;
