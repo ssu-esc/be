@@ -4,11 +4,21 @@ import NodeID3 from 'node-id3';
 import fs from 'fs';
 
 import { ApolloServer } from 'apollo-server-express';
+import DB from './db';
+
 import { typeDefs, resolvers } from './schema';
 
 const app = Express();
 const port = process.env.PORT || 3000;
 const upload = Multer({ dest: 'uploads/' });
+
+DB.authenticate()
+  .then(() => {
+    console.log('Database: Authenticate success');
+  })
+  .catch((err: any) => {
+    console.error('Database: Authenticate error:', err);
+  });
 
 app.get('/', (_, res) => {
   res.send('🤔');
