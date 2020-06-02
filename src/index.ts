@@ -1,7 +1,9 @@
 import Express from 'express';
+import CORS from 'cors';
 import Multer from 'multer';
 import NodeID3 from 'node-id3';
 import fs from 'fs';
+import { OAuth2Client } from 'google-auth-library';
 
 import { ApolloServer } from 'apollo-server-express';
 import DB from './db';
@@ -11,6 +13,8 @@ import { typeDefs, resolvers } from './schema';
 const app = Express();
 const port = process.env.PORT || 3000;
 const upload = Multer({ dest: 'uploads/' });
+
+app.use(CORS());
 
 DB.authenticate()
   .then(() => {
@@ -45,6 +49,21 @@ app.post('/upload', upload.single('music'), (req, res) => {
 const apolloServer = new ApolloServer({
   typeDefs,
   resolvers,
+  context: async ({ req }) => {
+    const token = req.headers.authorization?.substring(7) || '';
+    if (token === '') return { uid: '' };
+    try {
+      const oauthClientID = process.env.OAUTH_CLIENT_ID;
+      const oauthClient = new OAuth2Client(oauthClientID);
+      const ticket = await oauthClient.verifyIdToken({
+        idToken: token,
+        audience: oauthClientID || '',
+      });
+      return { uid: ticket.getPayload()?.sub };
+    } catch {
+      return { uid: '' };
+    }
+  },
   introspection: true,
   playground: true,
 });

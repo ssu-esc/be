@@ -1,6 +1,10 @@
 import { gql } from 'apollo-server-express';
 import { User } from './db';
 
+interface Context {
+  uid?: string;
+}
+
 const typeDefs = gql`
   type User {
     uid: Int
@@ -18,7 +22,8 @@ const typeDefs = gql`
 
 const resolvers = {
   Query: {
-    users: async () => {
+    users: async (parent: any, args: any, context: Context) => {
+      if (!context.uid) return [];
       const users = (await User.findAll()).map((user: any) => user.dataValues);
       return users;
     },
