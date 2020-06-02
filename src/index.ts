@@ -30,20 +30,34 @@ app.get('/', (_, res) => {
   res.send('🤔');
 });
 
-app.post('/upload', upload.single('music'), (req, res) => {
-  if (!req.file) {
+app.post('/upload', upload.array('files'), (req, res) => {
+  if (!req.files) {
     return res.status(400).json({ status: 'error', message: 'empty file' });
   }
 
-  const file = req.file.path;
-  const tags = NodeID3.read(file);
+  const tags = (req.files as Array<{ path: string; originalname: string }>).map(
+    (file) => {
+      const tag = NodeID3.read(file.path);
+      fs.unlinkSync(file.path);
 
-  fs.unlinkSync(file);
+      const { title, artist, performerInfo, album, image } = tag;
 
-  if (tags == null) {
-    return res.status(400).json({ status: 'error', message: 'tag not found' });
-  }
-  return res.json({ status: 'ok', ...tags });
+      return {
+        title: title ?? file.originalname,
+        artist: artist ?? '알 수 없는 아티스트',
+        performerInfo,
+        album: album ?? '알 수 없는 앨범',
+        image,
+      };
+    },
+  );
+
+  console.log(tags);
+
+  return res.json({
+    status: 'ok',
+    ...tags.map(({ image, ...rest }) => rest),
+  });
 });
 
 const apolloServer = new ApolloServer({
@@ -53,11 +67,11 @@ const apolloServer = new ApolloServer({
     const token = req.headers.authorization?.substring(7) || '';
     if (token === '') return { uid: '' };
     try {
-      const oauthClientID = process.env.OAUTH_CLIENT_ID;
-      const oauthClient = new OAuth2Client(oauthClientID);
-      const ticket = await oauthClient.verifyIdToken({
+      const oAuthClientID = process.env.OAUTH_CLIENT_ID;
+      const oAuthClient = new OAuth2Client(oAuthClientID);
+      const ticket = await oAuthClient.verifyIdToken({
         idToken: token,
-        audience: oauthClientID || '',
+        audience: oAuthClientID || '',
       });
       return { uid: ticket.getPayload()?.sub };
     } catch {
