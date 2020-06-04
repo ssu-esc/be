@@ -1,4 +1,5 @@
 import { OAuth2Client } from 'google-auth-library';
+import Logger from './logger';
 
 export async function getUID(bearerToken?: string) {
   const token = bearerToken?.substring(7) ?? '';
@@ -12,7 +13,7 @@ export async function getUID(bearerToken?: string) {
     });
     return ticket.getPayload()?.sub;
   } catch (error) {
-    console.log(error);
+    Logger.error(error, { label: 'Auth' });
     return null;
   }
 }

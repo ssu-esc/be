@@ -1,4 +1,5 @@
 import { Storage } from '@google-cloud/storage';
+import Logger from './logger';
 
 const storage = new Storage();
 const bucket = storage.bucket('storage.musicplayer.cloud');
@@ -11,7 +12,10 @@ export function fileUpload(name: string, buffer: Buffer): Promise<boolean> {
     stream.on('finish', () => {
       resolve(true);
     });
-    stream.on('error', reject);
+    stream.on('error', () => {
+      Logger.error(`'${name}' upload failed`, { label: 'Storage' });
+      reject();
+    });
     stream.end(buffer);
   });
 }
