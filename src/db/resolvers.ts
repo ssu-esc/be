@@ -1,24 +1,8 @@
-import { gql } from 'apollo-server-express';
-import { User } from './db';
+import { User } from '.';
 
 interface Context {
   uid?: string;
 }
-
-const typeDefs = gql`
-  type User {
-    uid: Int
-    email: String
-  }
-
-  type Query {
-    users: [User]
-  }
-
-  # type Mutation {
-  #   addUser(email: String!): User
-  # }
-`;
 
 const resolvers = {
   Query: {
@@ -39,4 +23,4 @@ const resolvers = {
   // },
 };
 
-export { typeDefs, resolvers };
+export default resolvers;
