@@ -1,18 +1,15 @@
 import { gql } from 'apollo-server-express';
 
 const typeDefs = gql`
-  type User {
-    uid: Int
-    email: String
+  type Album {
+    albumId: Int
+    title: String
+    artist: String
   }
 
   type Query {
-    users: [User]
+    albums: [Album]
   }
-
-  # type Mutation {
-  #   addUser(email: String!): User
-  # }
 `;
 
 export default typeDefs;
