@@ -6,10 +6,10 @@ export const checkJWT = jwt({
     cache: true,
     rateLimit: true,
     jwksRequestsPerMinute: 5,
-    jwksUri: 'https://niceb5y.auth0.com/.well-known/jwks.json',
+    jwksUri: 'https://musicplayercloud.auth0.com/.well-known/jwks.json',
   }),
   audience: 'https://api.musicplayer.cloud/',
-  issuer: 'https://niceb5y.auth0.com/',
+  issuer: 'https://musicplayercloud.auth0.com/',
   algorithms: ['RS256'],
   credentialsRequired: false,
 });
