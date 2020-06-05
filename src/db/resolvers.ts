@@ -1,4 +1,4 @@
-import { User } from '.';
+import Album from './models/album';
 
 interface Context {
   uid?: string;
@@ -6,10 +6,12 @@ interface Context {
 
 const resolvers = {
   Query: {
-    users: async (parent: any, args: any, context: Context) => {
+    albums: async (parent: any, args: any, context: Context) => {
       if (!context.uid) return [];
-      const users = (await User.findAll()).map((user: any) => user.dataValues);
-      return users;
+      const albums = (await Album.findAll({ where: { uid: context.uid } })).map(
+        (album: any) => album.dataValues,
+      );
+      return albums;
     },
   },
   // Mutation: {
