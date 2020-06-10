@@ -7,6 +7,9 @@ import ShortID from 'shortid';
 import { fileUpload } from '../util/storage';
 import Album from '../db/models/album';
 import Track from '../db/models/track';
+import { getUser } from '../util/auth';
+import { getTrackNumber } from '../util/tag';
+import { AuthRequest } from '../types';
 
 const Upload = Multer({ storage: Multer.memoryStorage() });
 
@@ -17,7 +20,7 @@ UploadRouter.post('/', Upload.array('files'), async (req: AuthRequest, res) => {
     return res.status(400).json({ status: 'error', message: 'empty file' });
   }
 
-  const uid = req.user?.sub ?? null;
+  const uid = getUser(req);
 
   if (!uid)
     return res
@@ -33,20 +36,11 @@ UploadRouter.post('/', Upload.array('files'), async (req: AuthRequest, res) => {
     const tag = NodeID3.read(file.buffer);
     await fileUpload(`${uid}/${filename}.mp3`, file.buffer);
 
-    if (tag.image) {
-      const image = await Sharp(tag.image.imageBuffer)
-        .resize(512, 512, { fit: 'contain' })
-        .jpeg({ quality: 75 })
-        .toBuffer();
-      await fileUpload(`${uid}/${filename}.jpg`, image);
-    }
-
     const trackProps = {
       trackId: filename,
-      coverId: tag.image ? filename : null,
       title: tag.title ?? file.originalname,
       artist: tag.artist ?? '알 수 없는 아티스트',
-      trackNumber: 0,
+      trackNumber: getTrackNumber(tag.trackNumber),
     };
 
     const albumProps = {
@@ -55,13 +49,24 @@ UploadRouter.post('/', Upload.array('files'), async (req: AuthRequest, res) => {
       uid,
     };
 
-    const album: Array<Album> = await Album.findOrCreate({
-      where: albumProps,
-    });
+    const album: Album = (
+      await Album.findOrCreate({
+        where: albumProps,
+      })
+    )[0];
 
     const track: Track = await Track.create(trackProps);
 
-    await album[0].addTrack(track);
+    await album.addTrack(track);
+
+    if (tag.image && !album.hasCover) {
+      const image = await Sharp(tag.image.imageBuffer)
+        .resize(512, 512, { fit: 'contain' })
+        .jpeg({ quality: 75 })
+        .toBuffer();
+      await fileUpload(`${uid}/${album.albumId}.jpg`, image);
+      await album.update({ hasCover: true });
+    }
 
     return trackProps;
   });
