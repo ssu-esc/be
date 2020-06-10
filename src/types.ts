@@ -1,4 +1,4 @@
-interface ParsedToken {
+export interface ParsedToken {
   iss: string;
   sub: string;
   aud: string | string[];
@@ -8,6 +8,6 @@ interface ParsedToken {
   scope: string;
 }
 
-interface AuthRequest extends Express.Request {
+export interface AuthRequest extends Express.Request {
   user?: ParsedToken;
 }

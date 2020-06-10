@@ -11,10 +11,11 @@ import sequelize from '../sequelize';
 import Track from './track';
 
 class Album extends Model {
+  public uid!: string;
   public albumId!: number;
   public title!: string;
   public artist!: string;
-  public uid!: string;
+  public hasCover!: boolean;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
@@ -32,6 +33,10 @@ Album.init(
       primaryKey: true,
       autoIncrement: true,
     },
+    uid: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     title: {
       type: DataTypes.STRING(127),
       allowNull: false,
@@ -40,9 +45,10 @@ Album.init(
       type: DataTypes.STRING(127),
       allowNull: false,
     },
-    uid: {
-      type: DataTypes.STRING,
+    hasCover: {
+      type: DataTypes.BOOLEAN,
       allowNull: false,
+      defaultValue: false,
     },
   },
   { sequelize },

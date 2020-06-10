@@ -2,8 +2,7 @@ import { Model, DataTypes } from 'sequelize';
 import sequelize from '../sequelize';
 
 class Track extends Model {
-  public id!: string;
-  public coverId?: string;
+  public trackId!: string;
   public title!: string;
   public artist!: string;
   public trackNumber!: number;
@@ -16,9 +15,6 @@ Track.init(
     trackId: {
       type: DataTypes.STRING(15),
       primaryKey: true,
-    },
-    coverId: {
-      type: DataTypes.STRING(15),
     },
     title: {
       type: DataTypes.STRING(127),
