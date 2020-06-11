@@ -27,56 +27,53 @@ UploadRouter.post('/', Upload.array('files'), async (req: AuthRequest, res) => {
       .status(400)
       .json({ status: 'error', message: 'valid token required' });
 
-  const fileProcesses = (req.files as Array<{
-    buffer: Buffer;
-    originalname: string;
-  }>).map(async (file) => {
-    const filename = ShortID();
+  const fileProcesses = (req.files as Array<Express.Multer.File>).map(
+    async (file) => {
+      const filename = ShortID();
+      const tag = NodeID3.read(file.buffer);
+      const trackProps = {
+        trackId: filename,
+        title: tag.title ?? file.originalname,
+        artist: tag.artist ?? '알 수 없는 아티스트',
+        trackNumber: getTrackNumber(tag.trackNumber),
+      };
+      const albumProps = {
+        title: tag.album ?? '알 수 없는 앨범',
+        artist: tag.performerInfo ?? trackProps.artist,
+        uid,
+      };
 
-    const tag = NodeID3.read(file.buffer);
-    await fileUpload(`${uid}/${filename}.mp3`, file.buffer);
+      try {
+        await fileUpload(`${uid}/${filename}.mp3`, file.buffer);
+        const album: Album = (
+          await Album.findOrCreate({
+            where: albumProps,
+          })
+        )[0];
+        const track: Track = await Track.create(trackProps);
+        await album.addTrack(track);
+        if (tag.image && !album.hasCover) {
+          const image = await Sharp(tag.image.imageBuffer)
+            .resize(512, 512, { fit: 'contain' })
+            .jpeg({ quality: 75 })
+            .toBuffer();
+          await fileUpload(`${uid}/${album.albumId}.jpg`, image);
+          await album.update({ hasCover: true });
+        }
 
-    const trackProps = {
-      trackId: filename,
-      title: tag.title ?? file.originalname,
-      artist: tag.artist ?? '알 수 없는 아티스트',
-      trackNumber: getTrackNumber(tag.trackNumber),
-    };
-
-    const albumProps = {
-      title: tag.album ?? '알 수 없는 앨범',
-      artist: tag.performerInfo ?? trackProps.artist,
-      uid,
-    };
-
-    const album: Album = (
-      await Album.findOrCreate({
-        where: albumProps,
-      })
-    )[0];
-
-    const track: Track = await Track.create(trackProps);
-
-    await album.addTrack(track);
-
-    if (tag.image && !album.hasCover) {
-      const image = await Sharp(tag.image.imageBuffer)
-        .resize(512, 512, { fit: 'contain' })
-        .jpeg({ quality: 75 })
-        .toBuffer();
-      await fileUpload(`${uid}/${album.albumId}.jpg`, image);
-      await album.update({ hasCover: true });
-    }
-
-    return trackProps;
-  });
+        return { status: 'ok', ...trackProps };
+      } catch (e) {
+        return {
+          status: 'failed',
+          error: e.message,
+        };
+      }
+    },
+  );
 
   const result = await Promise.all(fileProcesses);
 
-  return res.json({
-    status: 'ok',
-    ...result,
-  });
+  return res.json(result);
 });
 
 export default UploadRouter;
