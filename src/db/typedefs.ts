@@ -50,6 +50,15 @@ const typeDefs = gql`
   }
 
   type Mutation {
+    updateAlbum(albumId: Int!, artist: String!, title: String!): Album
+    updateTrack(
+      trackId: String!
+      album: String!
+      albumArtist: String!
+      artist: String!
+      title: String!
+      trackNumber: Int!
+    ): ExtendedTrack
     removeAlbum(albumId: Int!): Int
     removeTrack(trackId: String!): String
   }

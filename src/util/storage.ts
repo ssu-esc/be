@@ -1,4 +1,4 @@
-import { Storage } from '@google-cloud/storage';
+import { Storage, CopyResponse, MoveResponse } from '@google-cloud/storage';
 import Logger from './logger';
 
 const storage = new Storage();
@@ -22,4 +22,12 @@ export function upload(name: string, buffer: Buffer): Promise<boolean> {
 
 export function remove(name: string): Promise<any> {
   return bucket.file(name).delete();
+}
+
+export function move(from: string, to: string): Promise<MoveResponse> {
+  return bucket.file(from).move(to);
+}
+
+export function copy(from: string, to: string): Promise<CopyResponse> {
+  return bucket.file(from).copy(to);
 }
