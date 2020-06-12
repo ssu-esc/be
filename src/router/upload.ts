@@ -4,7 +4,7 @@ import NodeID3 from 'node-id3';
 import Sharp from 'sharp';
 import ShortID from 'shortid';
 
-import { upload } from '../util/storage';
+import { upload, remove } from '../util/storage';
 import Album from '../db/models/album';
 import Track from '../db/models/track';
 import { getUser } from '../util/auth';
@@ -74,6 +74,61 @@ UploadRouter.post('/', Upload.array('files'), async (req: AuthRequest, res) => {
   const result = await Promise.all(fileProcesses);
 
   return res.json(result);
+});
+
+UploadRouter.post(
+  '/cover/:albumId',
+  Upload.single('file'),
+  async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ status: 'error', message: 'empty file' });
+    }
+    const uid = getUser(req);
+    if (!uid)
+      return res
+        .status(400)
+        .json({ status: 'error', message: 'valid token required' });
+    const { albumId } = req.params;
+    const album = await Album.findOne({
+      where: {
+        uid,
+        albumId,
+      },
+    });
+    if (!album)
+      return res
+        .status(400)
+        .json({ status: 'error', message: 'album not found' });
+    const image = await Sharp(req.file.buffer)
+      .resize(512, 512, { fit: 'contain' })
+      .jpeg({ quality: 75 })
+      .toBuffer();
+    await upload(`${uid}/${albumId}.jpg`, image);
+    await album.update({ hasCover: true });
+    return res.json({ status: 'ok' });
+  },
+);
+
+UploadRouter.delete('/cover/:albumId', async (req, res) => {
+  const uid = getUser(req);
+  if (!uid)
+    return res
+      .status(400)
+      .json({ status: 'error', message: 'valid token required' });
+  const { albumId } = req.params;
+  const album = await Album.findOne({
+    where: {
+      uid,
+      albumId,
+    },
+  });
+  if (!album)
+    return res
+      .status(400)
+      .json({ status: 'error', message: 'album not found' });
+  await remove(`${uid}/${albumId}.jpg`);
+  await album.update({ hasCover: false });
+  return res.json({ status: 'ok' });
 });
 
 export default UploadRouter;
