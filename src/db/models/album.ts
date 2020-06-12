@@ -51,7 +51,15 @@ Album.init(
       defaultValue: false,
     },
   },
-  { sequelize },
+  {
+    sequelize,
+    indexes: [
+      {
+        unique: true,
+        fields: ['uid', 'title', 'artist'],
+      },
+    ],
+  },
 );
 
 Album.hasMany(Track);
