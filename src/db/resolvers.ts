@@ -1,6 +1,6 @@
 import Album from './models/album';
 import Track from './models/track';
-import { remove } from '../util/storage';
+import { remove, copy } from '../util/storage';
 
 interface Context {
   uid?: string;
@@ -135,6 +135,106 @@ const resolvers = {
     },
   },
   Mutation: {
+    updateAlbum: async (parent: any, args: any, context: Context) => {
+      if (!context.uid) return null;
+      const { uid } = context;
+      const { albumId, artist, title } = args;
+      const album = await Album.findOne({ where: { albumId, uid } });
+      if (!album) return null;
+      const targetAlbum = await Album.findOne({
+        where: { artist, title, uid },
+      });
+      if (!targetAlbum) {
+        album.update({ artist, title });
+        return album.dataValues;
+      }
+
+      if (targetAlbum.dataValues.albumId === albumId) {
+        return album.dataValues;
+      }
+      const targetAlbumId = targetAlbum.dataValues.albumId;
+      await Track.update(
+        { AlbumAlbumId: targetAlbumId },
+        { where: { AlbumAlbumId: albumId } },
+      );
+      if (album.dataValues.hasCover && !targetAlbum.dataValues.hasCover) {
+        copy(`${uid}/${albumId}.jpg`, `${uid}/${targetAlbumId}.jpg`);
+        targetAlbum.update({ hasCover: true });
+      }
+      await album.destroy();
+      await remove(`${uid}/${albumId}.jpg`);
+      return targetAlbum.dataValues;
+    },
+    updateTrack: async (parent: any, args: any, context: Context) => {
+      if (!context.uid) return null;
+      const { uid } = context;
+      const { trackId, album, albumArtist, artist, title, trackNumber } = args;
+      const track = await Track.findByPk(trackId);
+      const trackAlbum = await Album.findOne({
+        where: {
+          uid,
+          albumId: track.dataValues.AlbumAlbumId,
+        },
+      });
+      await track.update({ artist, title, trackNumber });
+      if (
+        trackAlbum.dataValues.artist !== albumArtist ||
+        trackAlbum.dataValues.title !== album
+      ) {
+        const targetAlbum = await Album.findOrCreate({
+          where: {
+            title: album,
+            artist: albumArtist,
+            uid,
+          },
+        });
+        await track.update({ AlbumAlbumId: targetAlbum[0].dataValues.albumId });
+        if (
+          trackAlbum.dataValues.hasCover &&
+          !targetAlbum[0].dataValues.hasCover
+        ) {
+          await copy(
+            `${uid}/${trackAlbum.dataValues.albumId}.jpg`,
+            `${uid}/${targetAlbum[0].dataValues.albumId}.jpg`,
+          );
+          await targetAlbum.update({ hasCover: true });
+        }
+        if (
+          (await Track.count({
+            where: { AlbumAlbumId: trackAlbum.dataValues.albumId },
+          })) === 0
+        ) {
+          await remove(`${uid}/${trackAlbum.dataValues.albumId}.jpg`);
+          await trackAlbum.destroy();
+        }
+        return {
+          album: targetAlbum[0].dataValues.title,
+          albumId: targetAlbum[0].dataValues.albumId,
+          albumArtist: targetAlbum[0].dataValues.artist,
+          artist: track.dataValues.artist,
+          cover: targetAlbum[0].dataValues.hasCover
+            ? `https://storage.googleapis.com/storage.musicplayer.cloud/${context.uid}/${targetAlbum[0].dataValues.albumId}.jpg`
+            : 'https://placehold.it/512?text=No%20Image',
+          title: track.dataValues.title,
+          trackId: track.dataValues.trackId,
+          trackNumber: track.dataValues.trackNumber,
+          url: `https://storage.googleapis.com/storage.musicplayer.cloud/${context.uid}/${track.dataValues.trackId}.mp3`,
+        };
+      }
+      return {
+        album: trackAlbum.dataValues.title,
+        albumId: trackAlbum.dataValues.albumId,
+        albumArtist: trackAlbum.dataValues.artist,
+        artist: track.dataValues.artist,
+        cover: trackAlbum.dataValues.hasCover
+          ? `https://storage.googleapis.com/storage.musicplayer.cloud/${context.uid}/${trackAlbum.dataValues.albumId}.jpg`
+          : 'https://placehold.it/512?text=No%20Image',
+        title: track.dataValues.title,
+        trackId: track.dataValues.trackId,
+        trackNumber: track.dataValues.trackNumber,
+        url: `https://storage.googleapis.com/storage.musicplayer.cloud/${context.uid}/${track.dataValues.trackId}.mp3`,
+      };
+    },
     removeTrack: async (parent: any, args: any, context: Context) => {
       if (!context.uid) return null;
       const { uid } = context;
