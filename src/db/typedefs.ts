@@ -1,6 +1,12 @@
 import { gql } from 'apollo-server-express';
 
 const typeDefs = gql`
+  type File {
+    filename: String!
+    mimetype: String!
+    encoding: String!
+  }
+
   type Track {
     artist: String
     title: String
@@ -12,6 +18,7 @@ const typeDefs = gql`
   type ExtendedTrack {
     album: String
     albumId: Int
+    albumArtist: String
     artist: String
     cover: String
     title: String
@@ -34,9 +41,17 @@ const typeDefs = gql`
   }
 
   type Query {
+    album(albumId: Int!): Album
     albums: [Album]
+    artist(name: String!): Artist
     artists: [Artist]
+    track(trackId: String!): ExtendedTrack
     tracks: [ExtendedTrack]
+  }
+
+  type Mutation {
+    removeAlbum(albumId: Int!): Int
+    removeTrack(trackId: String!): String
   }
 `;
 

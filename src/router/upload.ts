@@ -4,7 +4,7 @@ import NodeID3 from 'node-id3';
 import Sharp from 'sharp';
 import ShortID from 'shortid';
 
-import { fileUpload } from '../util/storage';
+import { upload } from '../util/storage';
 import Album from '../db/models/album';
 import Track from '../db/models/track';
 import { getUser } from '../util/auth';
@@ -44,7 +44,7 @@ UploadRouter.post('/', Upload.array('files'), async (req: AuthRequest, res) => {
       };
 
       try {
-        await fileUpload(`${uid}/${filename}.mp3`, file.buffer);
+        await upload(`${uid}/${filename}.mp3`, file.buffer);
         const album: Album = (
           await Album.findOrCreate({
             where: albumProps,
@@ -57,7 +57,7 @@ UploadRouter.post('/', Upload.array('files'), async (req: AuthRequest, res) => {
             .resize(512, 512, { fit: 'contain' })
             .jpeg({ quality: 75 })
             .toBuffer();
-          await fileUpload(`${uid}/${album.albumId}.jpg`, image);
+          await upload(`${uid}/${album.albumId}.jpg`, image);
           await album.update({ hasCover: true });
         }
 
