@@ -12,6 +12,7 @@ const typeDefs = gql`
   type ExtendedTrack {
     album: String
     albumId: Int
+    albumArtist: String
     artist: String
     cover: String
     title: String
@@ -34,8 +35,11 @@ const typeDefs = gql`
   }
 
   type Query {
+    album(albumId: Int!): Album
     albums: [Album]
+    artist(name: String!): Artist
     artists: [Artist]
+    track(trackId: String!): ExtendedTrack
     tracks: [ExtendedTrack]
   }
 `;
