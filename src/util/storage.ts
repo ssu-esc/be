@@ -4,7 +4,7 @@ import Logger from './logger';
 const storage = new Storage();
 const bucket = storage.bucket('storage.musicplayer.cloud');
 
-export function fileUpload(name: string, buffer: Buffer): Promise<boolean> {
+export function upload(name: string, buffer: Buffer): Promise<boolean> {
   return new Promise((resolve, reject) => {
     const stream = bucket.file(name).createWriteStream({
       resumable: false,
@@ -20,6 +20,6 @@ export function fileUpload(name: string, buffer: Buffer): Promise<boolean> {
   });
 }
 
-export default {
-  fileUpload,
-};
+export function remove(name: string): Promise<any> {
+  return bucket.file(name).delete();
+}

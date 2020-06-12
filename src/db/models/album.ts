@@ -62,6 +62,8 @@ Album.init(
   },
 );
 
-Album.hasMany(Track);
+Album.hasMany(Track, {
+  onDelete: 'cascade',
+});
 
 export default Album;

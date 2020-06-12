@@ -1,5 +1,6 @@
 import Album from './models/album';
 import Track from './models/track';
+import { remove } from '../util/storage';
 
 interface Context {
   uid?: string;
@@ -131,6 +132,48 @@ const resolvers = {
           [],
         );
       return tracks;
+    },
+  },
+  Mutation: {
+    removeTrack: async (parent: any, args: any, context: Context) => {
+      if (!context.uid) return null;
+      const { uid } = context;
+      const track = await Track.findByPk(args.trackId);
+      const albumId = track.dataValues.AlbumAlbumId;
+      await track.destroy();
+      await remove(`${uid}/${args.trackId}.mp3`);
+      const trackCount = await Track.count({
+        where: { AlbumAlbumId: albumId },
+      });
+      if (trackCount === 0) {
+        const album = await Album.findOne({
+          where: { albumId, uid },
+        });
+        await album.destroy();
+        await remove(`${uid}/${albumId}.jpg`);
+      }
+      return args.trackId;
+    },
+    removeAlbum: async (parent: any, args: any, context: Context) => {
+      if (!context.uid) return null;
+      const { uid } = context;
+      const album = await Album.findOne({
+        where: {
+          albumId: args.albumId,
+          uid,
+        },
+        include: [
+          {
+            model: Track,
+          },
+        ],
+      });
+      await remove(`${uid}/${args.albumId}.jpg`);
+      album.Tracks.forEach(async (track: any) => {
+        await remove(`${uid}/${track.dataValues.trackId}.mp3`);
+      });
+      await album.destroy();
+      return args.albumId;
     },
   },
   Album: {
