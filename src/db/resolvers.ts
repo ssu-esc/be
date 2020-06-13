@@ -16,7 +16,12 @@ const resolvers = {
           uid: context.uid,
         },
       });
-      return album.dataValues;
+      return {
+        ...album.dataValues,
+        cover: album.dataValues.hasCover
+          ? `https://storage.googleapis.com/storage.musicplayer.cloud/${context.uid}/${album.dataValues.albumId}.jpg`
+          : 'https://placehold.it/512?text=No%20Image',
+      };
     },
     albums: async (parent: any, args: any, context: Context) => {
       if (!context.uid) return [];
