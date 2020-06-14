@@ -16,6 +16,7 @@ const resolvers = {
           uid: context.uid,
         },
       });
+      if (!album) return null;
       return {
         ...album.dataValues,
         cover: album.dataValues.hasCover
@@ -29,8 +30,8 @@ const resolvers = {
         await Album.findAll({
           where: { uid: context.uid },
           order: [
-            ['artist', 'ASC'],
             ['title', 'ASC'],
+            ['artist', 'ASC'],
           ],
         })
       ).map((album: { dataValues: Album }) => ({
